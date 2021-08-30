@@ -30,7 +30,7 @@ class CameraController: NSObject {
     
     var highResolutionOutput: Bool = false
     
-    var orinetation:UIInterfaceOrientation = UIInterfaceOrientation.portrait
+    var orientation:UIInterfaceOrientation = UIInterfaceOrientation.portrait
     var isOpenedFromPortraitMode:Bool = UIDevice.current.orientation.isPortrait
     
     var motionManager: CMMotionManager!
@@ -131,7 +131,7 @@ extension CameraController {
                         
                         if orientationNew != orientationLast && orientationNew != .unknown{
                             orientationLast = orientationNew
-                            deviceOrientationChanged(orinetation: orientationNew)
+                            deviceOrientationChanged(orientation: orientationNew)
                         }
                     }
                     else {
@@ -144,8 +144,8 @@ extension CameraController {
             }
         }
         
-        func deviceOrientationChanged(orinetation:UIInterfaceOrientation) {
-            self.orinetation = orinetation;
+        func deviceOrientationChanged(orientation:UIInterfaceOrientation) {
+            self.orientation = orientation;
         }
         
         DispatchQueue(label: "prepare").async {
@@ -281,13 +281,13 @@ extension CameraController {
         settings.isHighResolutionPhotoEnabled = self.highResolutionOutput;
 
         let videoOrientation: AVCaptureVideoOrientation
-        if self.orinetation == .portrait {
+        if self.orientation == .portrait {
             videoOrientation = AVCaptureVideoOrientation.portrait
-        }else if (self.orinetation == .landscapeLeft){
+        }else if (self.orientation == .landscapeLeft){
             videoOrientation = AVCaptureVideoOrientation.landscapeLeft
-        }else if (self.orinetation == .landscapeRight){
+        }else if (self.orientation == .landscapeRight){
             videoOrientation = AVCaptureVideoOrientation.landscapeRight
-        }else if (self.orinetation == .portraitUpsideDown){
+        }else if (self.orientation == .portraitUpsideDown){
             videoOrientation = AVCaptureVideoOrientation.portraitUpsideDown
         }else {
             videoOrientation = AVCaptureVideoOrientation.portrait
