@@ -34,7 +34,9 @@ class CameraController: NSObject {
     var isOpenedFromPortraitMode:Bool = UIDevice.current.orientation.isPortrait
     
     var motionManager: CMMotionManager!
-    var zoomFactor: CGFloat = 1.0
+    var minimumZoom: CGFloat = 1.0
+    var maximumZoom: CGFloat = 3.0
+    var lastZoomFactor: CGFloat = 1.0
 }
 
 extension CameraController {
@@ -180,7 +182,7 @@ extension CameraController {
         let orientation: UIDeviceOrientation = UIDevice.current.orientation
         let statusBarOrientation = UIApplication.shared.statusBarOrientation
         let videoOrientation: AVCaptureVideoOrientation
-
+        
         switch (orientation) {
         case .portrait:
             videoOrientation = .portrait
@@ -206,9 +208,9 @@ extension CameraController {
         default:
             videoOrientation = .portrait
         }
-
+        
         self.previewLayer?.connection?.videoOrientation = videoOrientation
-
+        
         let pinch = UIPinchGestureRecognizer(target: self, action: #selector(handlePinch(_:)))
         view.addGestureRecognizer(pinch)
         
@@ -216,7 +218,8 @@ extension CameraController {
         view.addGestureRecognizer(tap)
         
         view.layer.insertSublayer(self.previewLayer!, at: 0)
-        self.previewLayer?.frame = view.frame
+
+        self.previewLayer?.frame = view.bounds;
     }
     
     func switchCameras() throws {
@@ -279,7 +282,7 @@ extension CameraController {
         
         settings.flashMode = self.flashMode
         settings.isHighResolutionPhotoEnabled = self.highResolutionOutput;
-
+        
         let videoOrientation: AVCaptureVideoOrientation
         if self.orientation == .portrait {
             videoOrientation = AVCaptureVideoOrientation.portrait
@@ -292,7 +295,7 @@ extension CameraController {
         }else {
             videoOrientation = AVCaptureVideoOrientation.portrait
         }
-
+        
         self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = videoOrientation
         self.photoOutput?.capturePhoto(with: settings, delegate: self)
         self.photoCaptureCompletionBlock = completion
@@ -419,7 +422,9 @@ extension CameraController {
     private func handlePinch(_ pinch: UIPinchGestureRecognizer) {
         guard let device = self.currentCameraPosition == .rear ? rearCamera : frontCamera else { return }
         
-        func minMaxZoom(_ factor: CGFloat) -> CGFloat { return min(max(factor, 1.0), device.activeFormat.videoMaxZoomFactor) }
+        func minMaxZoom(_ factor: CGFloat) -> CGFloat {
+            return min(min(max(factor, minimumZoom), maximumZoom), device.activeFormat.videoMaxZoomFactor)
+        }
         
         func update(scale factor: CGFloat) {
             do {
@@ -431,14 +436,14 @@ extension CameraController {
             }
         }
         
-        let newScaleFactor = minMaxZoom(pinch.scale * zoomFactor)
+        let newScaleFactor = minMaxZoom(pinch.scale * lastZoomFactor)
         
         switch pinch.state {
         case .began: fallthrough
         case .changed: update(scale: newScaleFactor)
         case .ended:
-            zoomFactor = minMaxZoom(newScaleFactor)
-            update(scale: zoomFactor)
+            lastZoomFactor = minMaxZoom(newScaleFactor)
+            update(scale: lastZoomFactor)
         default: break
         }
     }
