@@ -24,7 +24,7 @@ public class CameraPreview: CAPPlugin {
     @objc func rotated() {
         let state = UIApplication.shared.applicationState
         if(self.previewView == nil || self.cameraController.captureSession?.isRunning == false || state == .background || state == .inactive
-            || UIDevice.current.orientation == UIDeviceOrientation.portraitUpsideDown){
+           || UIDevice.current.orientation == UIDeviceOrientation.portraitUpsideDown){
             return;
         }
         
@@ -67,6 +67,16 @@ public class CameraPreview: CAPPlugin {
         self.cameraController.previewLayer?.connection?.videoOrientation = videoOrientation
     }
     
+    @objc func requestPermission(_ call: CAPPluginCall) {
+        AVCaptureDevice.requestAccess(for: .video, completionHandler: { (granted: Bool) in
+            if (granted) {
+                call.resolve()
+            } else {
+                call.reject("permission failed");
+            }
+        });
+    }
+    
     @objc func start(_ call: CAPPluginCall) {
         self.cameraPosition = call.getString("position") ?? "rear"
         self.highResolutionOutput = call.getBool("enableHighResolution") ?? false
@@ -85,16 +95,10 @@ public class CameraPreview: CAPPlugin {
         
         self.x = call.getInt("x") != nil ? CGFloat(call.getInt("x")!): 0
         self.y = call.getInt("y") != nil ? CGFloat(call.getInt("y")!): 0
-
+        
         if call.getInt("paddingBottom") != nil {
             self.paddingBottom = CGFloat(call.getInt("paddingBottom")!)
         }
-        
-        AVCaptureDevice.requestAccess(for: .video, completionHandler: { (granted: Bool) in
-            if (!granted) {
-                call.reject("permission failed");
-            }
-        });
         
         self.rotateWhenOrientationChanged = call.getBool("rotateWhenOrientationChanged") ?? true
         self.toBack = call.getBool("toBack") ?? false
@@ -255,7 +259,7 @@ public class CameraPreview: CAPPlugin {
             switch flashMode {
             case "off" :
                 flashModeAsEnum = AVCaptureDevice.FlashMode.off
-            case "on":                                                                                                                                                                                                                                                 
+            case "on":
                 flashModeAsEnum = AVCaptureDevice.FlashMode.on
             case "auto":
                 flashModeAsEnum = AVCaptureDevice.FlashMode.auto

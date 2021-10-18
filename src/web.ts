@@ -14,6 +14,10 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
     });
   }
 
+  requestPermission(): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+
   async start(options: CameraPreviewOptions): Promise<{}> {
     return new Promise((resolve, reject) => {
       navigator.mediaDevices.getUserMedia({

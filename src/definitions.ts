@@ -51,6 +51,7 @@ export interface ImageResult {
   thumbnailImage?: string;
 }
 export interface CameraPreviewPlugin {
+  requestPermission(): Promise<void>;
   start(options: CameraPreviewOptions): Promise<{}>;
   stop(): Promise<{}>;
   capture(options: CameraPreviewPictureOptions): Promise<ImageResult>;
