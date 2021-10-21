@@ -217,8 +217,6 @@ extension CameraController {
         let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
         view.addGestureRecognizer(tap)
         
-        view.layer.insertSublayer(self.previewLayer!, at: 0)
-
         self.previewLayer?.frame = view.bounds;
     }
     

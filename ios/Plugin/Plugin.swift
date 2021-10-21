@@ -79,7 +79,7 @@ public class CameraPreview: CAPPlugin {
         });
     }
     
-    @objc func start(_ call: CAPPluginCall) {
+    @objc func prepare(_ call: CAPPluginCall) {
         self.cameraPosition = call.getString("position") ?? "rear"
         self.highResolutionOutput = call.getBool("enableHighResolution") ?? false
         self.cameraController.highResolutionOutput = self.highResolutionOutput;
@@ -118,23 +118,38 @@ public class CameraPreview: CAPPlugin {
                     if let error = error {
                         print(error)
                         call.reject(error.localizedDescription)
-                        return
                     }
-                    self.previewView = UIView(frame: CGRect(x: self.x!, y: self.y!, width: self.width!, height: self.height!))
-                    self.cameraController.isOpenedFromPortraitMode = self.height! > self.width!
-                    
-                    self.webView?.isOpaque = false
-                    self.webView?.backgroundColor = UIColor.clear
-                    self.webView!.scrollView.backgroundColor = UIColor.clear
-                    self.webView?.superview?.addSubview(self.previewView)
-                    if (self.toBack!) {
-                        self.webView?.superview?.bringSubviewToFront(self.webView!)
+                    else {
+                        self.previewView = UIView(frame: CGRect(x: self.x!, y: self.y!, width: self.width!, height: self.height!))
+                        self.cameraController.isOpenedFromPortraitMode = self.height! > self.width!
+                        
+                        self.webView?.isOpaque = false
+                        self.webView?.backgroundColor = UIColor.clear
+                        self.webView!.scrollView.backgroundColor = UIColor.clear
+                        self.webView?.superview?.addSubview(self.previewView)
+                        if (self.toBack!) {
+                            self.webView?.superview?.bringSubviewToFront(self.webView!)
+                        }
+                        try? self.cameraController.displayPreview(on: self.previewView)
+                        
+                        call.resolve()
                     }
-                    try? self.cameraController.displayPreview(on: self.previewView)
-                    call.resolve()
-                    
                 }
             }
+        }
+    }
+    
+    @objc func start(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            self.previewView.layer.insertSublayer(self.cameraController.previewLayer!, at: 0)
+            call.resolve()
+        }
+    }
+    
+    @objc func show(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            self.webView?.superview?.addSubview(self.previewView)
+            call.resolve()
         }
     }
     
@@ -147,18 +162,26 @@ public class CameraPreview: CAPPlugin {
         }
     }
     
+    @objc func hide(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            self.previewView.removeFromSuperview()
+            call.resolve()
+        }
+    }
+    
     @objc func stop(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
             if (self.cameraController.captureSession?.isRunning ?? false) {
+                self.webView?.isOpaque = true
                 self.cameraController.captureSession?.stopRunning()
                 self.previewView.removeFromSuperview()
-                self.webView?.isOpaque = true
                 call.resolve()
             } else {
                 call.reject("camera already stopped")
             }
         }
     }
+    
     // Get user's cache directory path
     @objc func getTempFilePath() -> URL {
         let path = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
@@ -280,5 +303,4 @@ public class CameraPreview: CAPPlugin {
             call.reject("failed to set flash mode")
         }
     }
-    
 }

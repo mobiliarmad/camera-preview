@@ -52,7 +52,10 @@ export interface ImageResult {
 }
 export interface CameraPreviewPlugin {
   requestPermission(): Promise<void>;
-  start(options: CameraPreviewOptions): Promise<{}>;
+  prepare(options: CameraPreviewOptions): Promise<{}>;
+  start(): Promise<{}>;
+  show(): Promise<{}>;
+  hide(): Promise<{}>;
   stop(): Promise<{}>;
   capture(options: CameraPreviewPictureOptions): Promise<ImageResult>;
   getSupportedFlashModes(): Promise<{
