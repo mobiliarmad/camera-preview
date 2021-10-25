@@ -276,8 +276,8 @@ extension CameraController {
     
     func captureImage(completion: @escaping (UIImage?, Error?) -> Void) {
         guard let captureSession = captureSession, captureSession.isRunning else { completion(nil, CameraControllerError.captureSessionIsMissing); return }
-        let settings = AVCapturePhotoSettings()
         
+        let settings = AVCapturePhotoSettings()
         settings.flashMode = self.flashMode
         settings.isHighResolutionPhotoEnabled = self.highResolutionOutput;
         
@@ -474,11 +474,10 @@ extension CameraController {
 }
 
 extension CameraController: AVCapturePhotoCaptureDelegate {
-    public func photoOutput(_ captureOutput: AVCapturePhotoOutput, didFinishProcessingPhoto photoSampleBuffer: CMSampleBuffer?, previewPhoto previewPhotoSampleBuffer: CMSampleBuffer?,
-                            resolvedSettings: AVCaptureResolvedPhotoSettings, bracketSettings: AVCaptureBracketedStillImageSettings?, error: Swift.Error?) {
+    public func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         if let error = error { self.photoCaptureCompletionBlock?(nil, error) }
         
-        else if let buffer = photoSampleBuffer, let data = AVCapturePhotoOutput.jpegPhotoDataRepresentation(forJPEGSampleBuffer: buffer, previewPhotoSampleBuffer: nil),
+        else if let data = photo.fileDataRepresentation(),
                 let image = UIImage(data: data) {
             self.photoCaptureCompletionBlock?(image.reformat(), nil)
         }
