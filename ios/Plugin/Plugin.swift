@@ -172,9 +172,9 @@ public class CameraPreview: CAPPlugin {
     @objc func stop(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
             if (self.cameraController.captureSession?.isRunning ?? false) {
-                self.webView?.isOpaque = true
                 self.cameraController.captureSession?.stopRunning()
                 self.previewView.removeFromSuperview()
+                self.webView?.isOpaque = true
                 call.resolve()
             } else {
                 call.reject("camera already stopped")
