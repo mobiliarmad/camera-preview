@@ -25,6 +25,8 @@ class CameraController: NSObject {
     
     var previewLayer: AVCaptureVideoPreviewLayer?
     
+    var flashView: UIView!
+    
     var flashMode = AVCaptureDevice.FlashMode.off
     var photoCaptureCompletionBlock: ((UIImage?, Error?) -> Void)?
     
@@ -276,6 +278,9 @@ extension CameraController {
     
     func captureImage(completion: @escaping (UIImage?, Error?) -> Void) {
         guard let captureSession = captureSession, captureSession.isRunning else { completion(nil, CameraControllerError.captureSessionIsMissing); return }
+        UIView.animate(withDuration: 0.1, delay: 0, animations: { () -> Void in
+            self.flashView.alpha = 1
+        }, completion: nil)
         
         let settings = AVCapturePhotoSettings()
         settings.flashMode = self.flashMode
@@ -479,9 +484,8 @@ extension CameraController: AVCapturePhotoCaptureDelegate {
         
         else if let data = photo.fileDataRepresentation(),
                 let image = UIImage(data: data) {
-            self.photoCaptureCompletionBlock?(image.reformat(), nil)
+            self.photoCaptureCompletionBlock?(image, nil)
         }
-        
         else {
             self.photoCaptureCompletionBlock?(nil, CameraControllerError.unknown)
         }

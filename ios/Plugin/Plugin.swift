@@ -7,7 +7,6 @@ import AVFoundation
  */
 @objc(CameraPreview)
 public class CameraPreview: CAPPlugin {
-    
     var previewView:UIView!
     var cameraPosition = String()
     let cameraController = CameraController()
@@ -142,6 +141,11 @@ public class CameraPreview: CAPPlugin {
     @objc func start(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
             self.previewView.layer.insertSublayer(self.cameraController.previewLayer!, at: 0)
+            self.cameraController.flashView = UIView(frame: self.previewView.bounds)
+            self.cameraController.flashView.alpha = 0
+            self.cameraController.flashView.backgroundColor = UIColor.black
+            self.previewView.addSubview(self.cameraController.flashView)
+            
             call.resolve()
         }
     }
@@ -194,13 +198,15 @@ public class CameraPreview: CAPPlugin {
     }
     
     @objc func capture(_ call: CAPPluginCall) {
-        DispatchQueue.main.async {
-            
+        DispatchQueue.main.async {  
             let quality: Int = call.getInt("quality", 85)
             let thumbnailWidth: CGFloat = (CGFloat)(call.getInt("thumbnailWidth", 0))
             let imageQuality:CGFloat =  min(abs(CGFloat(quality)) / 100.0, 1.0);
             
             self.cameraController.captureImage { (image, error) in
+                UIView.animate(withDuration: 0.1, delay: 0, animations: { () -> Void in
+                    self.cameraController.flashView.alpha = 0
+                }, completion: nil)
                 
                 guard let image = image else {
                     print(error ?? "Image capture error")
@@ -249,7 +255,7 @@ public class CameraPreview: CAPPlugin {
                         try imageData?.write(to:imageUrl)
                         
                         if(thumbnailImageData != nil){
-                            let thumbnailUrl=self.getTempFilePath()
+                            let thumbnailUrl = self.getTempFilePath()
                             try thumbnailImageData?.write(to:thumbnailUrl)
                             
                             call.resolve(["image": imageUrl.absoluteString, "thumbnailImage":thumbnailUrl.absoluteString])
