@@ -204,10 +204,6 @@ public class CameraPreview: CAPPlugin {
             let imageQuality:CGFloat =  min(abs(CGFloat(quality)) / 100.0, 1.0);
             
             self.cameraController.captureImage { (image, error) in
-                UIView.animate(withDuration: 0.1, delay: 0, animations: { () -> Void in
-                    self.cameraController.flashView.alpha = 0
-                }, completion: nil)
-                
                 guard let image = image else {
                     print(error ?? "Image capture error")
                     guard let error = error else {

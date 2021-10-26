@@ -302,6 +302,10 @@ extension CameraController {
         self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = videoOrientation
         self.photoOutput?.capturePhoto(with: settings, delegate: self)
         self.photoCaptureCompletionBlock = completion
+        
+        UIView.animate(withDuration: 0.1, delay: 0, animations: { () -> Void in
+            self.flashView.alpha = 0
+        }, completion: nil)
     }
     
     func getSupportedFlashModes() throws -> [String] {
@@ -481,7 +485,6 @@ extension CameraController {
 extension CameraController: AVCapturePhotoCaptureDelegate {
     public func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         if let error = error { self.photoCaptureCompletionBlock?(nil, error) }
-        
         else if let data = photo.fileDataRepresentation(),
                 let image = UIImage(data: data) {
             self.photoCaptureCompletionBlock?(image, nil)
