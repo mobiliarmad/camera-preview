@@ -152,6 +152,7 @@ public class CameraPreview: CAPPlugin {
     
     @objc func show(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
+            self.cameraController.resetZoom()
             self.webView?.superview?.addSubview(self.previewView)
             call.resolve()
         }

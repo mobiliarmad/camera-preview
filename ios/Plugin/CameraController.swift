@@ -455,6 +455,19 @@ extension CameraController {
         }
     }
     
+    func resetZoom() {
+        guard let device = self.currentCameraPosition == .rear ? rearCamera : frontCamera else { return }
+        
+        do {
+            try device.lockForConfiguration()
+            defer { device.unlockForConfiguration() }
+            self.lastZoomFactor = 1.0;
+            device.videoZoomFactor = self.lastZoomFactor
+        } catch {
+            debugPrint(error)
+        }
+    }
+    
     @objc
     private func handleTap(_ tap: UITapGestureRecognizer) {
         guard let device = self.currentCameraPosition == .rear ? rearCamera : frontCamera else { return }
