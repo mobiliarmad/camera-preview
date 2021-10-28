@@ -36,9 +36,9 @@ class CameraController: NSObject {
     var isOpenedFromPortraitMode:Bool = UIDevice.current.orientation.isPortrait
     
     var motionManager: CMMotionManager!
-    var minimumZoom: CGFloat = 1.0
-    var maximumZoom: CGFloat = 3.0
     var lastZoomFactor: CGFloat = 1.0
+    var defaultZoomFactor: CGFloat = 1.0
+    var isUltraWideCamera = false;
 }
 
 extension CameraController {
@@ -50,9 +50,7 @@ extension CameraController {
         
         func configureCaptureDevices() throws {
             
-            let session = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera], mediaType: AVMediaType.video, position: .unspecified)
-            
-            let cameras = session.devices.compactMap { $0 }
+            let cameras = getCameraDevices()
             guard !cameras.isEmpty else { throw CameraControllerError.noCamerasAvailable }
             
             for camera in cameras {
@@ -68,6 +66,24 @@ extension CameraController {
                     camera.unlockForConfiguration()
                 }
             }
+        }
+        
+        func getCameraDevices() -> [AVCaptureDevice] {
+            var deviceTypes = [AVCaptureDevice.DeviceType]()
+       
+            if #available(iOS 13.0, *) {
+                deviceTypes.append(contentsOf: [.builtInDualWideCamera])
+                self.isUltraWideCamera = true
+                self.defaultZoomFactor = 2.0
+            }
+            
+            if(deviceTypes.isEmpty){
+                deviceTypes.append(contentsOf: [.builtInWideAngleCamera])
+                self.isUltraWideCamera = false
+                self.defaultZoomFactor = 1.0
+            }
+
+            return AVCaptureDevice.DiscoverySession(deviceTypes: deviceTypes, mediaType: .video, position: .unspecified).devices
         }
         
         func configureDeviceInputs() throws {
@@ -430,21 +446,22 @@ extension CameraController {
         guard let device = self.currentCameraPosition == .rear ? rearCamera : frontCamera else { return }
         
         func minMaxZoom(_ factor: CGFloat) -> CGFloat {
-            return min(min(max(factor, minimumZoom), maximumZoom), device.activeFormat.videoMaxZoomFactor)
+            return min(min(max(factor, device.minAvailableVideoZoomFactor), device.maxAvailableVideoZoomFactor), device.maxAvailableVideoZoomFactor)
         }
-        
+
         func update(scale factor: CGFloat) {
             do {
                 try device.lockForConfiguration()
                 defer { device.unlockForConfiguration() }
                 device.videoZoomFactor = factor
+
             } catch {
                 debugPrint(error)
             }
         }
         
         let newScaleFactor = minMaxZoom(pinch.scale * lastZoomFactor)
-        
+
         switch pinch.state {
         case .began: fallthrough
         case .changed: update(scale: newScaleFactor)
@@ -456,12 +473,16 @@ extension CameraController {
     }
     
     func resetZoom() {
+        if(self.lastZoomFactor == self.defaultZoomFactor){
+            return
+        }
+        
         guard let device = self.currentCameraPosition == .rear ? rearCamera : frontCamera else { return }
         
         do {
             try device.lockForConfiguration()
             defer { device.unlockForConfiguration() }
-            self.lastZoomFactor = 1.0;
+            self.lastZoomFactor = self.defaultZoomFactor;
             device.videoZoomFactor = self.lastZoomFactor
         } catch {
             debugPrint(error)

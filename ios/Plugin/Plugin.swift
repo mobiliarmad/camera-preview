@@ -144,8 +144,9 @@ public class CameraPreview: CAPPlugin {
             self.cameraController.flashView = UIView(frame: self.previewView.bounds)
             self.cameraController.flashView.alpha = 0
             self.cameraController.flashView.backgroundColor = UIColor.black
-            self.previewView.addSubview(self.cameraController.flashView)
             
+            self.cameraController.resetZoom()
+            self.previewView.addSubview(self.cameraController.flashView)
             call.resolve()
         }
     }
