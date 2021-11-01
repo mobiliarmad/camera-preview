@@ -1,6 +1,7 @@
 import Foundation
 import Capacitor
 import AVFoundation
+
 /**
  * Please read the Capacitor iOS Plugin Development Guide
  * here: https://capacitor.ionicframework.com/docs/plugins/ios
@@ -10,6 +11,10 @@ public class CameraPreview: CAPPlugin {
     var previewView:UIView!
     var cameraPosition = String()
     let cameraController = CameraController()
+    var outputVolumeObserve: NSKeyValueObservation?
+    var audioSession = AVAudioSession.sharedInstance()
+    var prepareCall: CAPPluginCall?
+    
     var x: CGFloat?
     var y: CGFloat?
     var width: CGFloat?
@@ -19,6 +24,8 @@ public class CameraPreview: CAPPlugin {
     var toBack: Bool?
     var storeToFile: Bool?
     var highResolutionOutput: Bool = false
+    var quality: Int?
+    var thumbnailWidth: CGFloat?
     
     @objc func rotated() {
         let state = UIApplication.shared.applicationState
@@ -82,6 +89,8 @@ public class CameraPreview: CAPPlugin {
         self.cameraPosition = call.getString("position") ?? "rear"
         self.highResolutionOutput = call.getBool("enableHighResolution") ?? false
         self.cameraController.highResolutionOutput = self.highResolutionOutput;
+        self.quality = call.getInt("quality", 85)
+        self.thumbnailWidth = (CGFloat)(call.getInt("thumbnailWidth", 0))
         
         if call.getInt("width") != nil {
             self.width = CGFloat(call.getInt("width")!)
@@ -130,7 +139,7 @@ public class CameraPreview: CAPPlugin {
                             self.webView?.superview?.bringSubviewToFront(self.webView!)
                         }
                         try? self.cameraController.displayPreview(on: self.previewView)
-                        
+
                         call.resolve()
                     }
                 }
@@ -139,6 +148,8 @@ public class CameraPreview: CAPPlugin {
     }
     
     @objc func start(_ call: CAPPluginCall) {
+        call.keepAlive = true
+        
         DispatchQueue.main.async {
             self.previewView.layer.insertSublayer(self.cameraController.previewLayer!, at: 0)
             self.cameraController.flashView = UIView(frame: self.previewView.bounds)
@@ -147,6 +158,8 @@ public class CameraPreview: CAPPlugin {
             
             self.cameraController.resetZoom()
             self.previewView.addSubview(self.cameraController.flashView)
+
+            self.listenVolumeButton(call: call)
             call.resolve()
         }
     }
@@ -181,6 +194,8 @@ public class CameraPreview: CAPPlugin {
                 self.cameraController.captureSession?.stopRunning()
                 self.previewView.removeFromSuperview()
                 self.webView?.isOpaque = true
+                self.prepareCall?.keepAlive = false
+                
                 call.resolve()
             } else {
                 call.reject("camera already stopped")
@@ -200,10 +215,8 @@ public class CameraPreview: CAPPlugin {
     }
     
     @objc func capture(_ call: CAPPluginCall) {
-        DispatchQueue.main.async {  
-            let quality: Int = call.getInt("quality", 85)
-            let thumbnailWidth: CGFloat = (CGFloat)(call.getInt("thumbnailWidth", 0))
-            let imageQuality:CGFloat =  min(abs(CGFloat(quality)) / 100.0, 1.0);
+        DispatchQueue.main.async {
+            let imageQuality:CGFloat =  min(abs(CGFloat(self.quality!)) / 100.0, 1.0);
             
             self.cameraController.captureImage { (image, error) in
                 guard let image = image else {
@@ -226,8 +239,8 @@ public class CameraPreview: CAPPlugin {
                 }
                 
                 var thumbnailImageData: Data?
-                if(thumbnailWidth > 0){
-                    let thumbnailImage = image.reformat(to: CGSize(width: thumbnailWidth, height: 0));
+                if(self.thumbnailWidth! > 0){
+                    let thumbnailImage = image.reformat(to: CGSize(width: self.thumbnailWidth!, height: 0));
                     
                     if (self.cameraPosition == "front") {
                         let flippedThumbnailImage = thumbnailImage.withHorizontallyFlippedOrientation()
@@ -305,6 +318,17 @@ public class CameraPreview: CAPPlugin {
             call.resolve()
         } catch {
             call.reject("failed to set flash mode")
+        }
+    }
+    
+    func listenVolumeButton(call: CAPPluginCall) {
+        do {
+            self.prepareCall = call
+            try audioSession.setActive(true)
+        } catch {}
+
+        outputVolumeObserve = audioSession.observe(\.outputVolume) { (audioSession, changes) in
+            self.capture(self.prepareCall!)
         }
     }
 }

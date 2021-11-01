@@ -1,3 +1,5 @@
+export type CallbackID = string;
+
 export type CameraPosition = "rear" | "front";
 export interface CameraPreviewOptions {
   /** Parent element to attach the video preview element to (applicable to the web platform only) */
@@ -28,17 +30,12 @@ export interface CameraPreviewOptions {
   enableHighResolution?: boolean;
   /** Defaults to false - Web only - Disables audio stream to prevent permission requests and output switching */
   disableAudio?: boolean;
-}
-export interface CameraPreviewPictureOptions {
-  /** The picture height, optional, default 0 (Device default) */
-  height?: number;
-  /** The picture width, optional, default 0 (Device default) */
-  width?: number;
   /** The picture quality, 0 - 100, default 85 */
   quality?: number;
   /** The thumbnail picture width, default 0 (don't use thumbnail) */
   thumbnailWidth?: number;
 }
+
 export type CameraPreviewFlashMode =
   | "off"
   | "on"
@@ -50,14 +47,15 @@ export interface ImageResult {
   image: string;
   thumbnailImage?: string;
 }
+export type ImageResultCallback = (data: ImageResult | null, err?: any) => void;
 export interface CameraPreviewPlugin {
   requestPermission(): Promise<void>;
   prepare(options: CameraPreviewOptions): Promise<{}>;
-  start(): Promise<{}>;
+  start(callback: ImageResultCallback): Promise<CallbackID>;
   show(): Promise<{}>;
   hide(): Promise<{}>;
   stop(): Promise<{}>;
-  capture(options: CameraPreviewPictureOptions): Promise<ImageResult>;
+  capture(): Promise<ImageResult>;
   getSupportedFlashModes(): Promise<{
     result: CameraPreviewFlashMode[];
   }>;
