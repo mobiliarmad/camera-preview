@@ -47,18 +47,18 @@ export interface ImageResult {
   image: string;
   thumbnailImage?: string;
 }
-export interface StartCallbackResult {
+export interface VolumeButtonResult {
   volumeButtonChanged: boolean;
 }
 
-export type StartCallback = (
-  data: StartCallbackResult | null,
+export type VolumeButtonCallback = (
+  data: VolumeButtonResult | null,
   err?: any
 ) => void;
 export interface CameraPreviewPlugin {
   requestPermission(): Promise<void>;
   prepare(options: CameraPreviewOptions): Promise<{}>;
-  start(callback: StartCallback): Promise<CallbackID>;
+  start(): Promise<{}>;
   show(): Promise<{}>;
   hide(): Promise<{}>;
   stop(): Promise<{}>;
@@ -68,4 +68,5 @@ export interface CameraPreviewPlugin {
   }>;
   setFlashMode(options: { flashMode: CameraPreviewFlashMode | string }): void;
   flip(): void;
+  listenOnVolumeButton(callback: VolumeButtonCallback): Promise<CallbackID>;
 }

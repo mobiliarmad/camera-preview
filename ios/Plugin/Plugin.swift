@@ -12,7 +12,7 @@ public class CameraPreview: CAPPlugin {
     var cameraPosition = String()
     let cameraController = CameraController()
     var outputVolumeObserve: NSKeyValueObservation?
-    var audioSession = AVAudioSession.sharedInstance()
+    var audioSession: AVAudioSession?
     
     var x: CGFloat?
     var y: CGFloat?
@@ -148,8 +148,6 @@ public class CameraPreview: CAPPlugin {
     }
     
     @objc func start(_ call: CAPPluginCall) {
-        call.keepAlive = true
-        
         DispatchQueue.main.async {
             self.previewView.layer.insertSublayer(self.cameraController.previewLayer!, at: 0)
             self.cameraController.flashView = UIView(frame: self.previewView.bounds)
@@ -160,7 +158,6 @@ public class CameraPreview: CAPPlugin {
             self.cameraController.resetZoom()
             self.previewView.addSubview(self.cameraController.flashView)
             
-            self.listenVolumeButton(call: call)
             call.resolve()
         }
     }
@@ -324,12 +321,23 @@ public class CameraPreview: CAPPlugin {
         }
     }
     
-    func listenVolumeButton(call: CAPPluginCall) {
+    @objc func listenOnVolumeButton(_ call: CAPPluginCall) {
         do {
-            try audioSession.setActive(true)
-        } catch {}
+            call.keepAlive = true
+            
+            if(self.audioSession == nil)
+            {
+                self.audioSession = AVAudioSession.sharedInstance();
+            }
+            
+            try audioSession?.setActive(true)
+            
+            call.resolve()
+        } catch {
+            call.reject("failed to listen on Volume Button")
+        }
         
-        outputVolumeObserve = audioSession.observe(\.outputVolume) { (audioSession, changes) in
+        outputVolumeObserve = audioSession?.observe(\.outputVolume) { (audioSession, changes) in
             if(!self.isCameraShowing)
             {
                 return

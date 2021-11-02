@@ -6,7 +6,7 @@
 CAP_PLUGIN(CameraPreview, "CameraPreview",
            CAP_PLUGIN_METHOD(requestPermission, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(prepare, CAPPluginReturnPromise);
-           CAP_PLUGIN_METHOD(start, CAPPluginReturnCallback);
+           CAP_PLUGIN_METHOD(start, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(show, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(hide, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(stop, CAPPluginReturnPromise);
@@ -14,4 +14,5 @@ CAP_PLUGIN(CameraPreview, "CameraPreview",
            CAP_PLUGIN_METHOD(flip, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(getSupportedFlashModes, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(setFlashMode, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(listenOnVolumeButton, CAPPluginReturnCallback);
 )

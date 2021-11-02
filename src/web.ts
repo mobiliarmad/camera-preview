@@ -3,8 +3,8 @@ import {
   CameraPreviewOptions,
   CameraPreviewPlugin,
   CameraPreviewFlashMode,
+  VolumeButtonCallback,
   CallbackID,
-  StartCallback,
 } from "./definitions";
 
 export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
@@ -13,6 +13,10 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
       name: "CameraPreview",
       platforms: ["web"],
     });
+  }
+
+  listenOnVolumeButton(_callback: VolumeButtonCallback): Promise<CallbackID> {
+    throw new Error("Method not implemented.");
   }
 
   prepare(_options: CameraPreviewOptions): Promise<{}> {
@@ -30,7 +34,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
     throw new Error("Method not implemented.");
   }
 
-  start(_callback: StartCallback): Promise<CallbackID> {
+  start(): Promise<any> {
     throw new Error("Method not implemented.");
   }
 
