@@ -13,7 +13,6 @@ public class CameraPreview: CAPPlugin {
     let cameraController = CameraController()
     var outputVolumeObserve: NSKeyValueObservation?
     var audioSession = AVAudioSession.sharedInstance()
-    var prepareCall: CAPPluginCall?
     
     var x: CGFloat?
     var y: CGFloat?
@@ -194,7 +193,6 @@ public class CameraPreview: CAPPlugin {
                 self.cameraController.captureSession?.stopRunning()
                 self.previewView.removeFromSuperview()
                 self.webView?.isOpaque = true
-                self.prepareCall?.keepAlive = false
                 
                 call.resolve()
             } else {
@@ -323,12 +321,11 @@ public class CameraPreview: CAPPlugin {
     
     func listenVolumeButton(call: CAPPluginCall) {
         do {
-            self.prepareCall = call
             try audioSession.setActive(true)
         } catch {}
 
         outputVolumeObserve = audioSession.observe(\.outputVolume) { (audioSession, changes) in
-            self.capture(self.prepareCall!)
+            self.capture(call)
         }
     }
 }
