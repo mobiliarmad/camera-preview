@@ -47,11 +47,18 @@ export interface ImageResult {
   image: string;
   thumbnailImage?: string;
 }
-export type ImageResultCallback = (data: ImageResult | null, err?: any) => void;
+export interface StartCallbackResult {
+  volumeButtonChanged: boolean;
+}
+
+export type StartCallback = (
+  data: StartCallbackResult | null,
+  err?: any
+) => void;
 export interface CameraPreviewPlugin {
   requestPermission(): Promise<void>;
   prepare(options: CameraPreviewOptions): Promise<{}>;
-  start(callback: ImageResultCallback): Promise<CallbackID>;
+  start(callback: StartCallback): Promise<CallbackID>;
   show(): Promise<{}>;
   hide(): Promise<{}>;
   stop(): Promise<{}>;

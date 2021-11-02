@@ -25,6 +25,7 @@ public class CameraPreview: CAPPlugin {
     var highResolutionOutput: Bool = false
     var quality: Int?
     var thumbnailWidth: CGFloat?
+    var isCameraShowing: Bool = false;
     
     @objc func rotated() {
         let state = UIApplication.shared.applicationState
@@ -138,7 +139,7 @@ public class CameraPreview: CAPPlugin {
                             self.webView?.superview?.bringSubviewToFront(self.webView!)
                         }
                         try? self.cameraController.displayPreview(on: self.previewView)
-
+                        
                         call.resolve()
                     }
                 }
@@ -155,9 +156,10 @@ public class CameraPreview: CAPPlugin {
             self.cameraController.flashView.alpha = 0
             self.cameraController.flashView.backgroundColor = UIColor.black
             
+            self.isCameraShowing = true
             self.cameraController.resetZoom()
             self.previewView.addSubview(self.cameraController.flashView)
-
+            
             self.listenVolumeButton(call: call)
             call.resolve()
         }
@@ -165,6 +167,7 @@ public class CameraPreview: CAPPlugin {
     
     @objc func show(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
+            self.isCameraShowing = true
             self.cameraController.resetZoom()
             self.webView?.superview?.addSubview(self.previewView)
             call.resolve()
@@ -182,6 +185,7 @@ public class CameraPreview: CAPPlugin {
     
     @objc func hide(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
+            self.isCameraShowing = false
             self.previewView.removeFromSuperview()
             call.resolve()
         }
@@ -193,6 +197,7 @@ public class CameraPreview: CAPPlugin {
                 self.cameraController.captureSession?.stopRunning()
                 self.previewView.removeFromSuperview()
                 self.webView?.isOpaque = true
+                self.isCameraShowing = false
                 
                 call.resolve()
             } else {
@@ -323,9 +328,13 @@ public class CameraPreview: CAPPlugin {
         do {
             try audioSession.setActive(true)
         } catch {}
-
+        
         outputVolumeObserve = audioSession.observe(\.outputVolume) { (audioSession, changes) in
-            self.capture(call)
+            if(!self.isCameraShowing)
+            {
+                return
+            }
+            call.resolve(["volumeButtonChanged": true])
         }
     }
 }

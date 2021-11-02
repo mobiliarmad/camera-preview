@@ -4,7 +4,7 @@ import {
   CameraPreviewPlugin,
   CameraPreviewFlashMode,
   CallbackID,
-  ImageResultCallback,
+  StartCallback,
 } from "./definitions";
 
 export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
@@ -30,7 +30,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
     throw new Error("Method not implemented.");
   }
 
-  start(_callback: ImageResultCallback): Promise<CallbackID> {
+  start(_callback: StartCallback): Promise<CallbackID> {
     throw new Error("Method not implemented.");
   }
 
