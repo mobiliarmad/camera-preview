@@ -328,10 +328,8 @@ public class CameraPreview: CAPPlugin {
             if(self.audioSession == nil)
             {
                 self.audioSession = AVAudioSession.sharedInstance();
+                try audioSession?.setActive(true)
             }
-            
-            try audioSession?.setActive(true)
-            
             call.resolve()
         } catch {
             call.reject("failed to listen on Volume Button")
