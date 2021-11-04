@@ -333,6 +333,7 @@ public class CameraPreview: CAPPlugin {
             call.resolve()
         } catch {
             call.reject("failed to listen on Volume Button")
+            call.keepAlive = false
         }
         
         outputVolumeObserve = audioSession?.observe(\.outputVolume) { (audioSession, changes) in
