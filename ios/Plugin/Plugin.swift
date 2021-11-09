@@ -41,7 +41,7 @@ public class CameraPreview: CAPPlugin {
         let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!;
         let videoOrientation: AVCaptureVideoOrientation
         
-        if (UIDevice.current.orientation.isLandscape && cameraController.orientation == UIInterfaceOrientation.portrait) {
+        if (UIDevice.current.orientation.isLandscape) {
             if(self.cameraController.isOpenedFromPortraitMode)
             {
                 self.previewView.frame = CGRect(x: self.y!, y: self.x!, width: height, height: self.width!)
@@ -60,7 +60,7 @@ public class CameraPreview: CAPPlugin {
             self.cameraController.previewLayer?.connection?.videoOrientation = videoOrientation
             self.cameraController.previewLayer?.frame = self.previewView.bounds
         }
-        else if (cameraController.orientation == UIInterfaceOrientation.landscapeLeft || cameraController.orientation == UIInterfaceOrientation.landscapeRight) {
+        else {
             if(self.cameraController.isOpenedFromPortraitMode)
             {
                 self.previewView.frame = CGRect(x: self.x!, y: self.y!, width: self.width!, height: height)
