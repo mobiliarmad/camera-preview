@@ -37,7 +37,8 @@ class CameraController: NSObject {
     
     var motionManager: CMMotionManager!
     var lastZoomFactor: CGFloat = 1.0
-    var defaultZoomFactor: CGFloat = 1.0
+    var defaultZoomFactorForBackCamera: CGFloat = 1.0
+    var defaultZoomFactorForFrontCamera: CGFloat = 1.0
     var isUltraWideCamera = false;
 }
 
@@ -49,41 +50,49 @@ extension CameraController {
         }
         
         func configureCaptureDevices() throws {
+            let backCameras = getBackCameraDevices()
+            guard !backCameras.isEmpty else { throw CameraControllerError.noCamerasAvailable }
             
-            let cameras = getCameraDevices()
-            guard !cameras.isEmpty else { throw CameraControllerError.noCamerasAvailable }
-            
-            for camera in cameras {
-                if camera.position == .front {
-                    self.frontCamera = camera
-                }
+            for camera in backCameras {
+                self.rearCamera = camera
                 
-                if camera.position == .back {
-                    self.rearCamera = camera
-                    
-                    try camera.lockForConfiguration()
-                    camera.focusMode = .continuousAutoFocus
-                    camera.unlockForConfiguration()
-                }
+                try camera.lockForConfiguration()
+                camera.focusMode = .continuousAutoFocus
+                camera.unlockForConfiguration()
+            }
+            
+            let frontCameras = getFrontCameraDevices()
+            if(frontCameras.isEmpty){
+                return;
+            }
+            
+            for camera in frontCameras {
+                self.frontCamera = camera
             }
         }
         
-        func getCameraDevices() -> [AVCaptureDevice] {
+        func getBackCameraDevices() -> [AVCaptureDevice] {
             var deviceTypes = [AVCaptureDevice.DeviceType]()
-       
+            
             if #available(iOS 13.0, *) {
                 deviceTypes.append(contentsOf: [.builtInDualWideCamera])
                 self.isUltraWideCamera = true
-                self.defaultZoomFactor = 2.0
+                self.defaultZoomFactorForBackCamera = 2.0
             }
             
             if(deviceTypes.isEmpty){
                 deviceTypes.append(contentsOf: [.builtInWideAngleCamera])
                 self.isUltraWideCamera = false
-                self.defaultZoomFactor = 1.0
+                self.defaultZoomFactorForBackCamera = 1.0
             }
-
-            return AVCaptureDevice.DiscoverySession(deviceTypes: deviceTypes, mediaType: .video, position: .unspecified).devices
+            
+            return AVCaptureDevice.DiscoverySession(deviceTypes: deviceTypes, mediaType: .video, position: .back).devices
+        }
+        
+        func getFrontCameraDevices() -> [AVCaptureDevice] {
+            var deviceTypes = [AVCaptureDevice.DeviceType]()
+            deviceTypes.append(contentsOf: [.builtInWideAngleCamera])
+            return AVCaptureDevice.DiscoverySession(deviceTypes: deviceTypes, mediaType: .video, position: .front).devices
         }
         
         func configureDeviceInputs() throws {
@@ -244,7 +253,6 @@ extension CameraController {
         captureSession.beginConfiguration()
         
         func switchToFrontCamera() throws {
-            
             guard let rearCameraInput = self.rearCameraInput, captureSession.inputs.contains(rearCameraInput),
                   let frontCamera = self.frontCamera else { throw CameraControllerError.invalidOperation }
             
@@ -254,10 +262,10 @@ extension CameraController {
             
             if captureSession.canAddInput(self.frontCameraInput!) {
                 captureSession.addInput(self.frontCameraInput!)
-                
+
                 self.currentCameraPosition = .front
+                self.resetZoom()
             }
-            
             else {
                 throw CameraControllerError.invalidOperation
             }
@@ -274,8 +282,9 @@ extension CameraController {
             
             if captureSession.canAddInput(self.rearCameraInput!) {
                 captureSession.addInput(self.rearCameraInput!)
-                
+
                 self.currentCameraPosition = .rear
+                self.resetZoom()
             }
             
             else { throw CameraControllerError.invalidOperation }
@@ -448,20 +457,20 @@ extension CameraController {
         func minMaxZoom(_ factor: CGFloat) -> CGFloat {
             return min(min(max(factor, device.minAvailableVideoZoomFactor), device.maxAvailableVideoZoomFactor), device.maxAvailableVideoZoomFactor)
         }
-
+        
         func update(scale factor: CGFloat) {
             do {
                 try device.lockForConfiguration()
                 defer { device.unlockForConfiguration() }
                 device.videoZoomFactor = factor
-
+                
             } catch {
                 debugPrint(error)
             }
         }
         
         let newScaleFactor = minMaxZoom(pinch.scale * lastZoomFactor)
-
+        
         switch pinch.state {
         case .began: fallthrough
         case .changed: update(scale: newScaleFactor)
@@ -473,16 +482,12 @@ extension CameraController {
     }
     
     func resetZoom() {
-        if(self.lastZoomFactor == self.defaultZoomFactor){
-            return
-        }
-        
         guard let device = self.currentCameraPosition == .rear ? rearCamera : frontCamera else { return }
         
         do {
             try device.lockForConfiguration()
             defer { device.unlockForConfiguration() }
-            self.lastZoomFactor = self.defaultZoomFactor;
+            self.lastZoomFactor = self.currentCameraPosition == .rear ? self.defaultZoomFactorForBackCamera : self.defaultZoomFactorForFrontCamera
             device.videoZoomFactor = self.lastZoomFactor
         } catch {
             debugPrint(error)
