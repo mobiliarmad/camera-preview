@@ -59,6 +59,7 @@ public class CameraPreview: CAPPlugin {
             
             self.cameraController.previewLayer?.connection?.videoOrientation = videoOrientation
             self.cameraController.previewLayer?.frame = self.previewView.bounds
+            self.cameraController.flashView?.frame = self.previewView.bounds
         }
         else {
             if(self.cameraController.isOpenedFromPortraitMode)
@@ -70,8 +71,10 @@ public class CameraPreview: CAPPlugin {
             }
             
             videoOrientation = .portrait
+            
             self.cameraController.previewLayer?.connection?.videoOrientation = videoOrientation
             self.cameraController.previewLayer?.frame = self.previewView.bounds
+            self.cameraController.flashView?.frame = self.previewView.bounds
         }
     }
     
