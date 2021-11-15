@@ -49,15 +49,22 @@ public class CameraPreview: CAPPlugin {
             {
                 if (UIDevice.current.orientation == UIDeviceOrientation.landscapeLeft)
                 {
-                    self.previewView.frame = CGRect(x: self.y!, y: self.primaryX!, width: height, height: self.width!)
+                    self.previewView.frame = CGRect(x: self.primaryX!, y: self.x!, width: height, height: self.width!)
                 }
                 else
                 {
-                    self.previewView.frame = CGRect(x: self.y!, y: self.secondaryX!, width: height, height: self.width!)
+                    self.previewView.frame = CGRect(x: self.secondaryX!, y: self.x!, width: height, height: self.width!)
                 }
             }
             else{
-                self.previewView.frame = CGRect(x: self.x!, y: self.y!, width: self.width!, height: height)
+                if (UIDevice.current.orientation == UIDeviceOrientation.landscapeLeft)
+                {
+                    self.previewView.frame = CGRect(x: self.primaryX!, y: self.y!, width: self.width!, height: height)
+                }
+                else
+                {
+                    self.previewView.frame = CGRect(x: self.secondaryX!, y: self.y!, width: self.width!, height: height)
+                }
             }
             
             if (UIDevice.current.orientation == UIDeviceOrientation.landscapeLeft) {
