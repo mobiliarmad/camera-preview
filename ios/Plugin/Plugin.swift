@@ -16,6 +16,9 @@ public class CameraPreview: CAPPlugin {
     
     var x: CGFloat?
     var y: CGFloat?
+    var primaryX: CGFloat?
+    var secondaryX: CGFloat?
+    
     var width: CGFloat?
     var height: CGFloat?
     var paddingBottom: CGFloat?
@@ -44,7 +47,14 @@ public class CameraPreview: CAPPlugin {
         if (UIDevice.current.orientation.isLandscape) {
             if(self.cameraController.isOpenedFromPortraitMode)
             {
-                self.previewView.frame = CGRect(x: self.y!, y: self.x!, width: height, height: self.width!)
+                if (UIDevice.current.orientation == UIDeviceOrientation.landscapeLeft)
+                {
+                    self.previewView.frame = CGRect(x: self.y!, y: self.primaryX!, width: height, height: self.width!)
+                }
+                else
+                {
+                    self.previewView.frame = CGRect(x: self.y!, y: self.secondaryX!, width: height, height: self.width!)
+                }
             }
             else{
                 self.previewView.frame = CGRect(x: self.x!, y: self.y!, width: self.width!, height: height)
@@ -67,7 +77,7 @@ public class CameraPreview: CAPPlugin {
                 self.previewView.frame = CGRect(x: self.x!, y: self.y!, width: self.width!, height: height)
             }
             else{
-                self.previewView.frame = CGRect(x: self.y!, y: self.x!, width: height, height: self.width!)
+                self.previewView.frame = CGRect(x: self.y!, y: self.primaryX!, width: height, height: self.width!)
             }
             
             videoOrientation = .portrait
@@ -108,6 +118,9 @@ public class CameraPreview: CAPPlugin {
         
         self.x = call.getInt("x") != nil ? CGFloat(call.getInt("x")!): 0
         self.y = call.getInt("y") != nil ? CGFloat(call.getInt("y")!): 0
+        
+        self.primaryX = call.getInt("primaryX") != nil ? CGFloat(call.getInt("primaryX")!): 0
+        self.secondaryX = call.getInt("secondaryX") != nil ? CGFloat(call.getInt("secondaryX")!): 0
         
         if call.getInt("paddingBottom") != nil {
             self.paddingBottom = CGFloat(call.getInt("paddingBottom")!)
