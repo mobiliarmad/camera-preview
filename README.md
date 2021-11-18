@@ -39,7 +39,7 @@ npx cap update
 
 # Methods
 
-### prepare(options)
+### prepare(options) and listenForOtherEvents()
 
 Prepare the camera preview instance.
 (Not showing camera preview on UI yet)
@@ -77,7 +77,10 @@ const cameraPreviewOptions: CameraPreviewOptions = {
   primaryX: cameraHeaderHeight,
   secondaryX: cameraFooterHeight
 };
-CameraPreview.prepare(cameraPreviewOptions);
+await CameraPreview.prepare(cameraPreviewOptions);
+
+// Load data and some events in background
+void CameraPreview.listenForOtherEvents();
 ```
 
 Remember to add the style below on your app's HTML or body element:
