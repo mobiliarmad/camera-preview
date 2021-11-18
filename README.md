@@ -50,7 +50,11 @@ const cameraPreviewOptions: CameraPreviewOptions = {
   height: 1920,
   width: 1080,
   quality: 50,
-  thumbnailWidth: 200
+  thumbnailWidth: 200,
+  
+  // Support landscape left and landscape right
+  primaryX: cameraHeaderHeight,
+  secondaryX: cameraFooterHeight
 };
 CameraPreview.prepare(cameraPreviewOptions);
 ```
@@ -116,13 +120,26 @@ CameraPreview.flip();
 ### capture()
 
 ```javascript
-import { CameraPreviewFlashMode } from "c@capacitor-community/camera-preview";
+import { CameraPreviewFlashMode } from "@capacitor-community/camera-preview";
 
 const result = await CameraPreview.capture();
-const base64PictureData = result.image;
-// do sometime with base64PictureData
+// If "storeToFile = true", the result.image will be the file path.
+// If "storeToFile = false", the result.image will be the Base64 string.
+const imagePath = result.image;
+const thumbnailPath = result.thumbnailImage as string;
+```
 
-const base64ThumbnailPictureData = result.thumbnailImage as string;
+### listenOnVolumeButton()
+
+Listen on volume button (up or down)
+
+```javascript
+CameraPreview.listenOnVolumeButton(async (res: VolumeButtonResult | null) => {
+	if (!res || !res.volumeButtonChanged) {
+		return;
+	}
+	// Call your capture function
+});
 ```
 
 ### getSupportedFlashModes()
