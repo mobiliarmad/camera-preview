@@ -16,6 +16,19 @@ Then run
 npx cap update
 ```
 
+# Features
+
+-Support create a thumbnail image together with the original image.
+-Use CoreMotion to detect the orientation when use lock to portrait mode.
+-Play audio like a native camera when clicking on the take picture button.
+-Tap to focus.
+-Pinch to zoom.
+-Support zoom out for the rear camera. ("builtInDualWideCamera": one ultra wide and one wide angle)
+-Listen on volume button to take image.
+-Show flash screen animation when taking picture.
+-Support the camera frame rotate to landscape left or landscape right. 
+
+
 # Methods
 
 ### prepare(options)
@@ -52,7 +65,7 @@ const cameraPreviewOptions: CameraPreviewOptions = {
   quality: 50,
   thumbnailWidth: 200,
   
-  // Support landscape left and landscape right
+  // Support camera frame rotate to landscape left or landscape right
   primaryX: cameraHeaderHeight,
   secondaryX: cameraFooterHeight
 };
