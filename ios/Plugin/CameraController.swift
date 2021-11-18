@@ -43,6 +43,108 @@ class CameraController: NSObject {
 }
 
 extension CameraController {
+    func getFrontCameraDevices() -> [AVCaptureDevice] {
+        var deviceTypes = [AVCaptureDevice.DeviceType]()
+        deviceTypes.append(contentsOf: [.builtInWideAngleCamera])
+        return AVCaptureDevice.DiscoverySession(deviceTypes: deviceTypes, mediaType: .video, position: .front).devices
+    }
+    
+    func getBackCameraDevices() -> [AVCaptureDevice] {
+        var deviceTypes = [AVCaptureDevice.DeviceType]()
+        
+        if #available(iOS 13.0, *) {
+            deviceTypes.append(contentsOf: [.builtInDualWideCamera])
+            self.isUltraWideCamera = true
+            self.defaultZoomFactorForBackCamera = 2.0
+        }
+        
+        if(deviceTypes.isEmpty){
+            deviceTypes.append(contentsOf: [.builtInWideAngleCamera])
+            self.isUltraWideCamera = false
+            self.defaultZoomFactorForBackCamera = 1.0
+        }
+        
+        return AVCaptureDevice.DiscoverySession(deviceTypes: deviceTypes, mediaType: .video, position: .back).devices
+    }
+    
+    func loadFrontCamera(){
+        let frontCameras = getFrontCameraDevices()
+        if(frontCameras.isEmpty){
+            return;
+        }
+
+        for camera in frontCameras {
+            self.frontCamera = camera
+        }
+    }
+    
+    func loadBackCamera() throws {
+        let backCameras = getBackCameraDevices()
+        guard !backCameras.isEmpty else { throw CameraControllerError.noCamerasAvailable }
+        
+        for camera in backCameras {
+            self.rearCamera = camera
+            
+            try camera.lockForConfiguration()
+            camera.focusMode = .continuousAutoFocus
+            camera.unlockForConfiguration()
+        }
+    }
+    
+    func detectOrientationByAccelerometer() {
+        let splitAngle:Double = 0.75
+        let updateTimer:TimeInterval = 0.5
+        
+        motionManager = CMMotionManager()
+        motionManager?.gyroUpdateInterval = updateTimer
+        motionManager?.accelerometerUpdateInterval = updateTimer
+        
+        var orientationLast = UIInterfaceOrientation(rawValue: 0)!
+        
+        if motionManager.isAccelerometerAvailable {
+            motionManager?.startAccelerometerUpdates(to: OperationQueue.current ?? OperationQueue.main, withHandler: {
+                (acceleroMeterData, error) -> Void in
+                if error == nil {
+                    let acceleration = (acceleroMeterData?.acceleration)!
+                    var orientationNew = UIInterfaceOrientation(rawValue: 0)!
+                    
+                    if acceleration.x >= splitAngle {
+                        orientationNew = .landscapeLeft
+                    }
+                    else if acceleration.x <= -(splitAngle) {
+                        orientationNew = .landscapeRight
+                    }
+                    else if acceleration.y <= -(splitAngle) {
+                        orientationNew = .portrait
+                    }
+                    else if acceleration.y >= splitAngle {
+                        orientationNew = .portraitUpsideDown
+                    }
+                    
+                    if orientationNew != orientationLast && orientationNew != .unknown{
+                        orientationLast = orientationNew
+                        self.deviceOrientationChanged(orientation: orientationNew)
+                    }
+                }
+                else {
+                    print("error : \(error!)")
+                }
+            })
+        }
+    }
+    
+    func deviceOrientationChanged(orientation:UIInterfaceOrientation) {
+        self.orientation = orientation;
+    }
+    
+    func addGestureForZoomAndFocus(on view: UIView){
+        let pinch = UIPinchGestureRecognizer(target: self, action: #selector(handlePinch(_:)))
+        view.addGestureRecognizer(pinch)
+        
+        let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
+        view.addGestureRecognizer(tap)
+    }
+    
     func prepare(cameraPosition: String, completionHandler: @escaping (Error?) -> Void) {
         func createCaptureSession() {
             self.captureSession = AVCaptureSession()
@@ -50,49 +152,8 @@ extension CameraController {
         }
         
         func configureCaptureDevices() throws {
-            let backCameras = getBackCameraDevices()
-            guard !backCameras.isEmpty else { throw CameraControllerError.noCamerasAvailable }
-            
-            for camera in backCameras {
-                self.rearCamera = camera
-                
-                try camera.lockForConfiguration()
-                camera.focusMode = .continuousAutoFocus
-                camera.unlockForConfiguration()
-            }
-            
-            let frontCameras = getFrontCameraDevices()
-            if(frontCameras.isEmpty){
-                return;
-            }
-            
-            for camera in frontCameras {
-                self.frontCamera = camera
-            }
-        }
-        
-        func getBackCameraDevices() -> [AVCaptureDevice] {
-            var deviceTypes = [AVCaptureDevice.DeviceType]()
-            
-            if #available(iOS 13.0, *) {
-                deviceTypes.append(contentsOf: [.builtInDualWideCamera])
-                self.isUltraWideCamera = true
-                self.defaultZoomFactorForBackCamera = 2.0
-            }
-            
-            if(deviceTypes.isEmpty){
-                deviceTypes.append(contentsOf: [.builtInWideAngleCamera])
-                self.isUltraWideCamera = false
-                self.defaultZoomFactorForBackCamera = 1.0
-            }
-            
-            return AVCaptureDevice.DiscoverySession(deviceTypes: deviceTypes, mediaType: .video, position: .back).devices
-        }
-        
-        func getFrontCameraDevices() -> [AVCaptureDevice] {
-            var deviceTypes = [AVCaptureDevice.DeviceType]()
-            deviceTypes.append(contentsOf: [.builtInWideAngleCamera])
-            return AVCaptureDevice.DiscoverySession(deviceTypes: deviceTypes, mediaType: .video, position: .front).devices
+            try self.loadBackCamera()
+            self.loadFrontCamera()
         }
         
         func configureDeviceInputs() throws {
@@ -127,63 +188,13 @@ extension CameraController {
             if captureSession.canAddOutput(self.photoOutput!) { captureSession.addOutput(self.photoOutput!) }
             captureSession.startRunning()
         }
-        
-        func detectOrientationByAccelerometer() throws {
-            let splitAngle:Double = 0.75
-            let updateTimer:TimeInterval = 0.5
-            
-            motionManager = CMMotionManager()
-            motionManager?.gyroUpdateInterval = updateTimer
-            motionManager?.accelerometerUpdateInterval = updateTimer
-            
-            var orientationLast    = UIInterfaceOrientation(rawValue: 0)!
-            
-            if motionManager.isAccelerometerAvailable {
-                motionManager?.startAccelerometerUpdates(to: OperationQueue.current ?? OperationQueue.main, withHandler: {
-                    (acceleroMeterData, error) -> Void in
-                    if error == nil {
-                        let acceleration = (acceleroMeterData?.acceleration)!
-                        var orientationNew = UIInterfaceOrientation(rawValue: 0)!
-                        
-                        if acceleration.x >= splitAngle {
-                            orientationNew = .landscapeLeft
-                        }
-                        else if acceleration.x <= -(splitAngle) {
-                            orientationNew = .landscapeRight
-                        }
-                        else if acceleration.y <= -(splitAngle) {
-                            orientationNew = .portrait
-                        }
-                        else if acceleration.y >= splitAngle {
-                            orientationNew = .portraitUpsideDown
-                        }
-                        
-                        if orientationNew != orientationLast && orientationNew != .unknown{
-                            orientationLast = orientationNew
-                            deviceOrientationChanged(orientation: orientationNew)
-                        }
-                    }
-                    else {
-                        print("error : \(error!)")
-                    }
-                })
-            }
-            else{
-                throw CameraControllerError.noAccelerometerAvailable
-            }
-        }
-        
-        func deviceOrientationChanged(orientation:UIInterfaceOrientation) {
-            self.orientation = orientation;
-        }
-        
+    
         DispatchQueue(label: "prepare").async {
             do {
                 createCaptureSession()
                 try configureCaptureDevices()
                 try configureDeviceInputs()
                 try configurePhotoOutput()
-                try detectOrientationByAccelerometer()
             }
             
             catch {
@@ -237,13 +248,7 @@ extension CameraController {
         }
         
         self.previewLayer?.connection?.videoOrientation = videoOrientation
-        
-        let pinch = UIPinchGestureRecognizer(target: self, action: #selector(handlePinch(_:)))
-        view.addGestureRecognizer(pinch)
-        
-        let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
-        view.addGestureRecognizer(tap)
-        
+
         self.previewLayer?.frame = view.bounds;
     }
     

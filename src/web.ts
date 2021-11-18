@@ -15,6 +15,10 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
     });
   }
 
+  listenForOtherEvents(): Promise<{}> {
+    throw new Error("Method not implemented.");
+  }
+
   listenOnVolumeButton(_callback: VolumeButtonCallback): Promise<CallbackID> {
     throw new Error("Method not implemented.");
   }

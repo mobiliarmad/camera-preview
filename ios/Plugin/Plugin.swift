@@ -173,14 +173,23 @@ public class CameraPreview: CAPPlugin {
     @objc func start(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
             self.previewView.layer.insertSublayer(self.cameraController.previewLayer!, at: 0)
+            self.isCameraShowing = true
+            self.cameraController.resetZoom()
+            
+            call.resolve()
+        }
+    }
+    
+    @objc func listenForOtherEvents(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
             self.cameraController.flashView = UIView(frame: self.previewView.bounds)
             self.cameraController.flashView.alpha = 0
             self.cameraController.flashView.backgroundColor = UIColor.black
-            
-            self.isCameraShowing = true
-            self.cameraController.resetZoom()
             self.previewView.addSubview(self.cameraController.flashView)
             
+            self.cameraController.detectOrientationByAccelerometer()
+            self.cameraController.addGestureForZoomAndFocus(on: self.previewView)
+ 
             call.resolve()
         }
     }

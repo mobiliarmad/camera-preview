@@ -63,6 +63,7 @@ export interface CameraPreviewPlugin {
   requestPermission(): Promise<void>;
   prepare(options: CameraPreviewOptions): Promise<{}>;
   start(): Promise<{}>;
+  listenForOtherEvents(): Promise<{}>;
   show(): Promise<{}>;
   hide(): Promise<{}>;
   stop(): Promise<{}>;
